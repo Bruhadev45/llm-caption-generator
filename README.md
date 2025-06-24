@@ -1,20 +1,24 @@
 # 🧠 LLM-Powered Image Caption Generator
 
-A Streamlit web app that uses BLIP (Bootstrapped Language Image Pretraining) from Salesforce to generate intelligent captions for uploaded images. Built with Hugging Face Transformers, PyTorch, and Google Translate API.
+A professional, user-friendly Streamlit app to generate intelligent image captions using Salesforce BLIP, and translate them to any language using Google Translate.
 
 ## 🚀 Features
 
-- Upload **multiple images**
-- Choose between BLIP **base or large** models
-- Optional **caption translation** to Telugu 🇮🇳
-- Clean UI with live feedback
+- Upload multiple images and get captions instantly
+- Select between BLIP base or large models
+- Optional: Translate captions to **any language** (over 100 supported)
+- Device auto-detection (GPU/CPU)
+- Modern, polished UI with side-by-side results, timing, spinners, and cards
+- "Regenerate" button for improved caption quality
+- Modular codebase, ready for future LLM (e.g. GPT) rewriting
 
 ## 🛠 Tech Stack
 
-- [Streamlit](https://streamlit.io/)
-- [HuggingFace Transformers](https://huggingface.co/)
-- [BLIP Model](https://huggingface.co/Salesforce/blip-image-captioning-base)
-- [googletrans](https://pypi.org/project/googletrans/)
+- Streamlit
+- HuggingFace Transformers (BLIP)
+- PyTorch
+- Googletrans (Translation)
+- Python 3.8+
 
 ## 📦 Installation
 
