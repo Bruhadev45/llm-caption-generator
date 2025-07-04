@@ -23,8 +23,8 @@ except Exception as e:
     st.error(f"Error initializing OpenAI client. Please check your OPENAI_API_KEY in .env (for local) or Streamlit secrets (for deployment). Details: {e}")
     st.stop() # Stop the app if client cannot be initialized
 
-st.set_page_config(page_title="🧠 Image Caption + Translator (OpenAI 🚀)", layout="wide")
-st.title("📷 Image Captioning & Translation")
+st.set_page_config(page_title="🧠 Advanced Image Caption + Translator (OpenAI 🚀)", layout="wide")
+st.title("📷 Advanced Image Captioning & Translation")
 
 # Define Indian language options for translation
 indian_languages = {
@@ -59,7 +59,13 @@ selected_language_code = indian_languages[selected_language_name]
 selected_caption_style = st.sidebar.selectbox("Caption Style", caption_styles, index=0)
 num_captions_to_generate = st.sidebar.slider("Number of Captions per Image", 1, 10, 1) # Generate 1 to 10 captions
 
-# --- MODIFIED: Allow multiple files ---
+# --- NEW: Clear All Button in Sidebar ---
+if st.sidebar.button("Clear All"):
+    print("DEBUG: 'Clear All' button clicked. Resetting session state.")
+    st.session_state.uploaded_images_data = []
+    # Force a rerun to clear the file uploader and reset the app
+    st.rerun()
+
 uploaded_files = st.file_uploader("Upload Images", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 # Function to encode image to base64 for OpenAI Vision API
@@ -69,7 +75,7 @@ def encode_image_to_base64(image: Image.Image) -> str:
     image.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-# 📸  Caption generator function using OpenAI GPT-4o Vision
+# 📸 Caption generator function using OpenAI GPT-4o Vision
 def generate_openai_captions(image: Image.Image, style: str, num_variations: int) -> list[str]:
     """
     Generates multiple captions for an image based on a specified style using OpenAI's GPT-4o Vision model.
@@ -119,6 +125,7 @@ def generate_openai_captions(image: Image.Image, style: str, num_variations: int
             captions_list = [line.strip() for line in raw_captions.split('\n') if line.strip()]
             cleaned_captions = []
             for cap in captions_list:
+                # Handle potential numbering (e.g., "1. ", "2. ", "- ")
                 if cap and (cap[0].isdigit() and (cap[1] == '.' or cap[1] == ' ')):
                     cleaned_captions.append(cap[cap.find('.') + 1:].strip() if '.' in cap else cap[cap.find(' ') + 1:].strip())
                 elif cap.startswith('- '):
@@ -148,8 +155,10 @@ if uploaded_files:
     current_file_names = sorted([f.name for f in uploaded_files])
     stored_file_names = sorted([img_data['file_name'] for img_data in st.session_state.uploaded_images_data])
 
+    # Only process new files if the set of uploaded files has genuinely changed
+    # This prevents reprocessing on every rerun if the same files are selected
     if current_file_names != stored_file_names:
-        print("DEBUG: New set of files uploaded or files changed. Resetting state.")
+        print("DEBUG: New set of files uploaded or files changed. Resetting state for new upload.")
         st.session_state.uploaded_images_data = [] # Clear all previous images
 
         for uploaded_file in uploaded_files:
@@ -163,17 +172,15 @@ if uploaded_files:
         # Trigger initial caption generation for all new images
         # This will cause a rerun for each image, so we generate them sequentially
         # and then rerun once all initial captions are generated.
-        all_initial_captions_generated = True
-        for img_entry in st.session_state.uploaded_images_data:
-            if not img_entry['captions_data']: # If this image doesn't have captions yet
-                with st.spinner(f"🧠 Generating {num_captions_to_generate} {selected_caption_style.lower()} captions for {img_entry['file_name']}..."):
-                    captions = generate_openai_captions(img_entry['image_data'], selected_caption_style, num_captions_to_generate)
-                    for caption_text in captions:
-                        img_entry['captions_data'].append({'caption': caption_text, 'translations': {}})
-                all_initial_captions_generated = False # Indicate that a generation occurred
-        
-        if not all_initial_captions_generated:
-            st.rerun() # Rerun to display the initial captions
+        # We only rerun if there was actual new content to process.
+        if st.session_state.uploaded_images_data:
+            with st.spinner(f"🧠 Generating initial captions for uploaded images..."):
+                for img_entry in st.session_state.uploaded_images_data:
+                    if not img_entry['captions_data']: # Only generate if not already generated
+                        captions = generate_openai_captions(img_entry['image_data'], selected_caption_style, num_captions_to_generate)
+                        for caption_text in captions:
+                            img_entry['captions_data'].append({'caption': caption_text, 'translations': {}})
+            st.rerun() # Rerun once after all initial generations
 
     # Display results for each uploaded image
     for img_idx, img_entry in enumerate(st.session_state.uploaded_images_data):
@@ -215,7 +222,11 @@ if uploaded_files:
 
 else:
     # Clear session state if no files are uploaded (e.g., on initial load or clear)
-    print("DEBUG: No files uploaded. Clearing session state.")
-    st.session_state.uploaded_images_data = []
-    st.info("📤 Upload one or more images to begin generating  captions and translations.")
+    # This block ensures a clean state if the user removes all files from the uploader.
+    if st.session_state.uploaded_images_data: # Only clear if there was data
+        print("DEBUG: No files uploaded in uploader. Clearing session state.")
+        st.session_state.uploaded_images_data = []
+        st.rerun() # Rerun to reflect the cleared state
+    else:
+        st.info("📤 Upload one or more images to begin generating captions and translations.")
 
