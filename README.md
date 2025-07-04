@@ -4,12 +4,22 @@ This Streamlit application provides an advanced solution for generating descript
 
 ## ✨ Features
 
+# 📷 Image Captioning & Translation App with OpenAI
+
+This Streamlit application provides an advanced solution for generating descriptive captions for images and translating them into various Indian languages. It leverages the power of OpenAI's latest multimodal and language models to deliver accurate and contextually relevant results.
+
+## ✨ Features
+
 * **Advanced Image Captioning:** Utilizes OpenAI's `gpt-4o` (Vision) model to generate highly detailed and context-aware captions for uploaded images.
+* **Multi-Image Upload:** Supports uploading multiple images at once, allowing for batch processing and comparison of captions.
 * **Multiple Caption Variations:** Generate up to 10 distinct caption options for a single image, allowing users to choose the most suitable description.
 * **Customizable Caption Style:** Select from various styles (e.g., "Concise," "Descriptive," "Humorous," "Poetic," "Professional") to tailor the tone and focus of the generated captions.
 * **Indian Language Translation:** Translate captions into a wide range of Indian languages using OpenAI's `gpt-3.5-turbo` model, with improved accuracy for natural-sounding translations.
 * **Interactive UI:** Built with Streamlit for a user-friendly and responsive web interface.
 * **Generate More Captions:** A dedicated button to generate additional captions for the same uploaded image without re-uploading.
+* **Clear All Functionality:** A "Clear All" button in the sidebar to reset the application, removing all uploaded images and generated content.
+
+
 
 ## 📂 Project Structure
 ```
@@ -81,14 +91,15 @@ Follow these steps to get the application up and running on your local machine.
 
 ## 💡 Usage
 
-1.  **Upload an Image:** Use the file uploader on the left sidebar to select an image (JPG, JPEG, or PNG).
+1.  **Upload Images:** Use the file uploader on the left sidebar to select **one or more** images (JPG, JPEG, or PNG).
 2.  **Customize Options:**
     * **Caption Style:** Choose a style (e.g., "Humorous", "Professional") from the dropdown to influence the caption's tone.
-    * **Number of Captions:** Use the slider to specify how many distinct captions (1 to 10) you want to generate initially.
+    * **Number of Captions:** Use the slider to specify how many distinct captions (1 to 10) you want to generate initially for each image.
     * **Enable Translation:** Check this box if you want the captions to be translated.
     * **Translate to:** Select your desired Indian language for translation.
-3.  **View Results:** The generated captions and their translations (if enabled) will appear below your uploaded image.
-4.  **Generate More:** Click the "Generate Another Caption" button to get additional captions for the same image based on your current style and number of captions settings.
+3.  **View Results:** The uploaded images will be displayed, followed by their generated captions and translations (if enabled).
+4.  **Generate More:** Click the "Generate Another Caption for [Image Name]" button below each image to get additional captions for that specific image based on your current style and number of captions settings.
+5.  **Clear All:** Click the "Clear All" button in the sidebar to reset the application, removing all uploaded images and generated content, and clearing the file uploader.
 
 ## 🧠 Models Used
 
