@@ -23,8 +23,8 @@ except Exception as e:
     st.error(f"Error initializing OpenAI client. Please check your OPENAI_API_KEY in .env (for local) or Streamlit secrets (for deployment). Details: {e}")
     st.stop() # Stop the app if client cannot be initialized
 
-st.set_page_config(page_title="🧠 Advanced Image Caption + Translator (OpenAI 🚀)", layout="wide")
-st.title("📷 Advanced Image Captioning & Translation")
+st.set_page_config(page_title="🧠 Image Caption + Translator (OpenAI 🚀)", layout="wide")
+st.title("📷 Image Captioning & Translation")
 
 # Define Indian language options for translation
 indian_languages = {
@@ -69,7 +69,7 @@ def encode_image_to_base64(image: Image.Image) -> str:
     image.save(buffered, format="PNG")
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-# 📸 Advanced Caption generator function using OpenAI GPT-4o Vision
+# 📸  Caption generator function using OpenAI GPT-4o Vision
 def generate_openai_captions(image: Image.Image, style: str, num_variations: int) -> list[str]:
     """
     Generates multiple captions for an image based on a specified style using OpenAI's GPT-4o Vision model.
@@ -217,5 +217,5 @@ else:
     # Clear session state if no files are uploaded (e.g., on initial load or clear)
     print("DEBUG: No files uploaded. Clearing session state.")
     st.session_state.uploaded_images_data = []
-    st.info("📤 Upload one or more images to begin generating advanced captions and translations.")
+    st.info("📤 Upload one or more images to begin generating  captions and translations.")
 
