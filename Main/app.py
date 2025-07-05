@@ -30,8 +30,8 @@ except Exception as e:
     st.stop() # Halts the Streamlit app execution
 
 # Set Streamlit page configuration for a wide layout and a custom title.
-st.set_page_config(page_title="🧠 Advanced Image Caption + Translator (OpenAI 🚀)", layout="wide")
-st.title("📷 Advanced Image Captioning & Translation")
+st.set_page_config(page_title="🧠  Image Caption + Translator (OpenAI 🚀)", layout="wide")
+st.title("📷  Image Captioning & Translation")
 
 # Define a dictionary of Indian languages and their corresponding language codes.
 # These codes are used when making translation requests to the OpenAI API.
