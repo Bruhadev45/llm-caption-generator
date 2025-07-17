@@ -4,12 +4,6 @@ This Streamlit application provides an advanced solution for generating descript
 
 ## ✨ Features
 
-# 📷 Image Captioning & Translation App with OpenAI
-
-This Streamlit application provides an advanced solution for generating descriptive captions for images and translating them into various Indian languages. It leverages the power of OpenAI's latest multimodal and language models to deliver accurate and contextually relevant results.
-
-## ✨ Features
-
 * **Advanced Image Captioning:** Utilizes OpenAI's `gpt-4o` (Vision) model to generate highly detailed and context-aware captions for uploaded images.
 * **Multi-Image Upload:** Supports uploading multiple images at once, allowing for batch processing and comparison of captions.
 * **Multiple Caption Variations:** Generate up to 10 distinct caption options for a single image, allowing users to choose the most suitable description.
