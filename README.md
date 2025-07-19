@@ -45,7 +45,7 @@ This Streamlit application provides an advanced solution for generating descript
     ├── __init__.py         # Makes 'utils' a Python package
     ├── translator.py       # Contains OpenAI-based translation logic
     └── vectordb.py         # Contains in-memory vector search (RAG logic)
-
+```
 
 ---
 
