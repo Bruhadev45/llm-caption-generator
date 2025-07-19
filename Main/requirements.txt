@@ -3,4 +3,5 @@
     python-dotenv
     requests
     openai
-    
+    chromadb
+    sentence-transformers
