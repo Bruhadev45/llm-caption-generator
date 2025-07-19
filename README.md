@@ -31,6 +31,7 @@ This Streamlit application provides an advanced solution for generating descript
 
 ---
 
+```
 ## 📂 Project Structure
 
 .
