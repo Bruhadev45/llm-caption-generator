@@ -39,9 +39,8 @@ if 'file_uploader_key_counter' not in st.session_state:
 
 # --- Sidebar Controls (RAG first, then others) ---
 
-# RAG toggle at the top
 use_rag_for_caption = st.sidebar.toggle("🔎 Use RAG context for new captions", value=False) if hasattr(st.sidebar, "toggle") else st.sidebar.checkbox("🔎 Use RAG context for new captions", value=False)
-rag_top_k = 1 # Fixed value
+rag_top_k = 1  # Fixed value, adjust if you want
 
 enable_translation = st.sidebar.checkbox("Enable Translation", False)
 selected_language_name = st.sidebar.selectbox("Translate to", list(indian_languages.keys()), index=0)
@@ -69,28 +68,15 @@ def encode_image_to_base64(image: Image.Image) -> str:
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 def generate_openai_captions(image: Image.Image, style: str, num_variations: int, use_rag: bool, rag_k: int) -> (list, list):
-    """Generate captions, optionally using RAG context from similar captions in DB."""
+    """Generate captions, then use RAG (retrieval) if enabled."""
     if not OPENAI_API_KEY:
         return ["❌ OpenAI API Key missing. Please set it in Streamlit secrets or .env."], []
     base64_image = encode_image_to_base64(image)
 
-    # Optionally get RAG context
-    rag_context = []
-    if use_rag and rag_k > 0:
-        try:
-            rag_results = search_similar_captions("image caption", top_k=rag_k)
-            rag_context = [doc for doc in rag_results['documents'][0]]
-        except Exception as e:
-            rag_context = []
-
+    # Step 1: Always generate captions first (without RAG context)
     prompt_text = f"Generate {num_variations} distinct captions for this image."
     if style != "Default":
         prompt_text += f" The captions should have a {style.lower()} tone."
-    if use_rag and rag_context:
-        prompt_text += (
-            "\n\nHere are some relevant captions from my database for context:\n" +
-            "\n".join(f"- {c}" for c in rag_context)
-        )
     if num_variations > 1:
         prompt_text += " Provide each caption on a new line, prefixed with a number (e.g., '1. Caption one\\n2. Caption two')."
     else:
@@ -127,11 +113,26 @@ def generate_openai_captions(image: Image.Image, style: str, num_variations: int
                     cleaned_captions.append(cap[2:].strip())
                 else:
                     cleaned_captions.append(cap)
-            return cleaned_captions, rag_context
+            captions = cleaned_captions
         else:
-            return [raw_captions], rag_context
+            captions = [raw_captions]
     except Exception as e:
-        return [f"❌ OpenAI Captioning Error: {e}"], rag_context
+        return [f"❌ OpenAI Captioning Error: {e}"], []
+
+    # Step 2: Now do RAG retrieval if enabled
+    rag_context = []
+    min_rag_score = 0.3  # Lowered for better recall; adjust as needed
+    if use_rag and rag_k > 0 and captions:
+        try:
+            rag_results = search_similar_captions(captions[0], top_k=rag_k, min_score=min_rag_score)
+            rag_context = [doc for doc in rag_results['documents'][0]]
+            scores = rag_results.get('scores', [[]])[0]
+            if not rag_context or all(score < min_rag_score for score in scores):
+                rag_context = ["No relevant caption found for this image."]
+        except Exception as e:
+            rag_context = ["No relevant caption found for this image."]
+
+    return captions, rag_context
 
 # --- Main Application Flow ---
 

@@ -1,7 +1,8 @@
-   streamlit
-    Pillow
-    python-dotenv
-    requests
-    openai
-    chromadb
-    sentence-transformers
+streamlit
+Pillow
+python-dotenv
+requests
+openai
+chromadb
+sentence-transformers
+faiss-cpu
