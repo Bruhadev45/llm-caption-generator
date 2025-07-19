@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import base64
 import io
-from openai import OpenAI
+from langchain_openai import OpenAI as LangChainOpenAI
+from langchain.prompts import PromptTemplate
 from utils.translator import translate_with_openai
 from utils.vectordb import add_caption_to_db, search_similar_captions
 
@@ -17,13 +18,10 @@ if not OPENAI_API_KEY:
     st.error("❌ OPENAI_API_KEY not found. Please set it in your .env or Streamlit secrets.")
     st.stop()
 
-try:
-    client = OpenAI(api_key=OPENAI_API_KEY)
-except Exception as e:
-    st.error(f"Error initializing OpenAI client: {e}")
-    st.stop()
+# --- LangChain LLM setup (for prompt templating, translation) ---
+llm_caption = LangChainOpenAI(openai_api_key=OPENAI_API_KEY, model="gpt-4o", temperature=0.5)
 
-st.set_page_config(page_title="🧠  Image Caption + Translator", layout="wide")
+st.set_page_config(page_title="🧠  Image Caption + Translator ", layout="wide")
 st.title("📷  Image Captioning and Translation")
 
 indian_languages = {
@@ -37,10 +35,10 @@ caption_styles = [
 if 'file_uploader_key_counter' not in st.session_state:
     st.session_state.file_uploader_key_counter = 0
 
-# --- Sidebar Controls (RAG first, then others) ---
+# --- Sidebar Controls ---
 
 use_rag_for_caption = st.sidebar.toggle("🔎 Use RAG context for new captions", value=False) if hasattr(st.sidebar, "toggle") else st.sidebar.checkbox("🔎 Use RAG context for new captions", value=False)
-rag_top_k = 1  # Fixed value, adjust if you want
+rag_top_k = 2
 
 enable_translation = st.sidebar.checkbox("Enable Translation", False)
 selected_language_name = st.sidebar.selectbox("Translate to", list(indian_languages.keys()), index=0)
@@ -68,22 +66,21 @@ def encode_image_to_base64(image: Image.Image) -> str:
     return base64.b64encode(buffered.getvalue()).decode("utf-8")
 
 def generate_openai_captions(image: Image.Image, style: str, num_variations: int, use_rag: bool, rag_k: int) -> (list, list):
-    """Generate captions, then use RAG (retrieval) if enabled."""
-    if not OPENAI_API_KEY:
-        return ["❌ OpenAI API Key missing. Please set it in Streamlit secrets or .env."], []
     base64_image = encode_image_to_base64(image)
 
-    # Step 1: Always generate captions first (without RAG context)
-    prompt_text = f"Generate {num_variations} distinct captions for this image."
-    if style != "Default":
-        prompt_text += f" The captions should have a {style.lower()} tone."
-    if num_variations > 1:
-        prompt_text += " Provide each caption on a new line, prefixed with a number (e.g., '1. Caption one\\n2. Caption two')."
-    else:
-        prompt_text += " Provide a single, perfect, and descriptive caption, aiming for at least one full sentence. Focus on the main subject and action."
+    # Build prompt using LangChain PromptTemplate
+    style_add = f"The captions should have a {style.lower()} tone." if style != "Default" else ""
+    prompt_template = PromptTemplate(
+        input_variables=["num_variations", "style_add"],
+        template="""Generate {num_variations} distinct captions for this image. {style_add}
+Provide each caption on a new line, prefixed with a number (e.g., '1. Caption one\\n2. Caption two')."""
+    )
+    prompt_text = prompt_template.format(num_variations=num_captions_to_generate, style_add=style_add)
 
     try:
-        response = client.chat.completions.create(
+        import openai
+        openai.api_key = OPENAI_API_KEY
+        response = openai.chat.completions.create(
             model="gpt-4o",
             messages=[
                 {
@@ -119,17 +116,14 @@ def generate_openai_captions(image: Image.Image, style: str, num_variations: int
     except Exception as e:
         return [f"❌ OpenAI Captioning Error: {e}"], []
 
-    # Step 2: Now do RAG retrieval if enabled
+    # Now do RAG retrieval if enabled, using the first caption as the query
     rag_context = []
-    min_rag_score = 0.3  # Lowered for better recall; adjust as needed
+    min_rag_score = 0.3
     if use_rag and rag_k > 0 and captions:
-        try:
-            rag_results = search_similar_captions(captions[0], top_k=rag_k, min_score=min_rag_score)
-            rag_context = [doc for doc in rag_results['documents'][0]]
-            scores = rag_results.get('scores', [[]])[0]
-            if not rag_context or all(score < min_rag_score for score in scores):
-                rag_context = ["No relevant caption found for this image."]
-        except Exception as e:
+        rag_results = search_similar_captions(captions[0], top_k=rag_k)
+        rag_context = [doc for doc in rag_results['documents'][0]]
+        scores = rag_results.get('scores', [[]])[0]
+        if not rag_context or all(score < min_rag_score for score in scores):
             rag_context = ["No relevant caption found for this image."]
 
     return captions, rag_context
